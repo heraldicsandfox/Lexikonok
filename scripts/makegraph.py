@@ -1,7 +1,8 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 from collections import Counter
 from re import findall, match, split
 from itertools import combinations
+from sys import stdin
 
 def grouper(it, n, merge=tuple):
 	result = []
@@ -17,7 +18,7 @@ def sentences(file):
 		line = split("([.?|])", line)
 		line[0] = last + line[0]
 		last = line[-1]
-		yield from grouper
+		yield from grouper(line, 2, merge="".join)
 	yield last
 
 def structure(s):
@@ -25,7 +26,7 @@ def structure(s):
 
 def markov(text):
 	prob = {}
-	for s in next:
+	for s in text:
 		last = None
 		for w in s:
 			w = w.lower()
@@ -53,8 +54,8 @@ def graph(prob, counts, groups):
 		G[l,r] = sum(min(recounts[l][dir][w],recounts[r][dir].get(w,0)) for dir in (FWARD,BWARD) for w in recounts[l][dir].keys())
 	return G
 
-text = [structure(s) for s in sentences(open("ct.txt"))]
-prob = markov()
+text = [structure(s) for s in sentences(stdin)]
+prob = markov(text)
 counts = Counter(w.lower() for s in text for w in s)
 counts[None] = len(text)
 groups = {}

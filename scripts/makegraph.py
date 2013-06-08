@@ -2,7 +2,7 @@
 from collections import Counter
 from re import findall, match, split
 from itertools import combinations
-from sys import stdin, stderr
+from sys import argv, stdin, stderr
 
 def grouper(it, n, merge=tuple):
 	result = []
@@ -36,7 +36,7 @@ def markov(text):
 			last = w
 	return prob
 
-def graph(prob, counts, groups):
+def graph(prob, counts, groups, out):
 	global LIMIT
 	FWARD, BWARD = 1, -1
 	G = {}
@@ -51,18 +51,18 @@ def graph(prob, counts, groups):
 				recounts[r] = {FWARD:{},BWARD:{}}
 			recounts[l][FWARD][sr] = recounts[l][FWARD].get(sr,0) + prob[l][r] / counts[l]
 			recounts[r][BWARD][sl] = recounts[r][BWARD].get(sl,0) + prob[l][r] / counts[r]
-	for l,r in combinations((k for k in counts.keys() if k and match("[a-zA-Z0-9+]",k) and counts[k] >= LIMIT), 2):
-		G[l,r] = sum(min(recounts[l][dir][w],recounts[r][dir].get(w,0)) for dir in (FWARD,BWARD) for w in recounts[l][dir].keys())
-	return G
-
-text = [structure(s) for s in sentences(stdin)]
-LIMIT = 0 if len(text) < 10000 else 30
+	for l,r in combinations((k for k in counts.keys()), 2):
+		w = sum(min(recounts[l][dir][w],recounts[r][dir].get(w,0)) for dir in (FWARD,BWARD) for w in recounts[l][dir].keys())
+		if l == 'me' or r == 'me':
+			print(l,r,w)
+		if w:
+			print("%s\t%s\t%f" % (l,r,w),file=out)
+print("Reading '%s'" % argv[1])
+text = [structure(s) for s in sentences(open(argv[1]))]
 prob = markov(text)
 counts = Counter(w.lower() for s in text for w in s)
 counts[None] = len(text)
 groups = {}
-g = graph(prob, counts, groups)
+graph(prob,counts,groups,open(argv[2],'w'))
 
-for (l,r),w in g.items():
-	print("%s\t%s\t%f" % (l,r,w))
 

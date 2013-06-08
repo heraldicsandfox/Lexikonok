@@ -18,7 +18,7 @@ clean:
 # Uses Python3.3 or newer
 $(GRAPHS): $$(TEXT)
 	@mkdir -p $(@D)
-	scripts/makegraph.py <$< >$@
+	scripts/makegraph.py $< $@
 
 # Uses MCL, available from http://www.micans.org/mcl/
 $(CLUSTERS): $$(GRAPH)

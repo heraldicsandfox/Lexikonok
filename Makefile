@@ -12,6 +12,9 @@ GRAPH	 = build/graph/$(basename $(@F)).mcl
 
 all: $(CLUSTERS)
 
+clean:
+	rm -rf build
+
 # Uses Python3.3 or newer
 $(GRAPHS): $$(TEXT)
 	@mkdir -p $(@D)

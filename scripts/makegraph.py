@@ -2,7 +2,7 @@
 from collections import Counter
 from re import findall, match, split
 from itertools import combinations
-from sys import stdin
+from sys import stdin, stderr
 
 def grouper(it, n, merge=tuple):
 	result = []
@@ -15,7 +15,7 @@ def grouper(it, n, merge=tuple):
 def sentences(file):
 	last = ''
 	for line in file:
-		line = split("([.?|])", line)
+		line = split("([.?!])", line)
 		line[0] = last + line[0]
 		last = line[-1]
 		yield from grouper(line, 2, merge="".join)
@@ -37,6 +37,7 @@ def markov(text):
 	return prob
 
 def graph(prob, counts, groups):
+	global LIMIT
 	FWARD, BWARD = 1, -1
 	G = {}
 	recounts = {}
@@ -45,16 +46,17 @@ def graph(prob, counts, groups):
 			recounts[l] = {FWARD:{},BWARD:{}}
 		sl = groups.get(l,l)
 		for r in prob.get(l,{}).keys():
-			sr = groups.get(r,l)
+			sr = groups.get(r,r)
 			if r not in recounts:
 				recounts[r] = {FWARD:{},BWARD:{}}
 			recounts[l][FWARD][sr] = recounts[l][FWARD].get(sr,0) + prob[l][r] / counts[l]
 			recounts[r][BWARD][sl] = recounts[r][BWARD].get(sl,0) + prob[l][r] / counts[r]
-	for l,r in combinations((k for k in counts.keys() if k and counts[k] >= 30 and match("[a-zA-Z0-9+]",k)), 2):
+	for l,r in combinations((k for k in counts.keys() if k and match("[a-zA-Z0-9+]",k) and counts[k] >= LIMIT), 2):
 		G[l,r] = sum(min(recounts[l][dir][w],recounts[r][dir].get(w,0)) for dir in (FWARD,BWARD) for w in recounts[l][dir].keys())
 	return G
 
 text = [structure(s) for s in sentences(stdin)]
+LIMIT = 0 if len(text) < 10000 else 30
 prob = markov(text)
 counts = Counter(w.lower() for s in text for w in s)
 counts[None] = len(text)
